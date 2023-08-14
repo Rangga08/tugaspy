@@ -1,0 +1,47 @@
+import time
+import RPi.GPIO as GPIO
+from BAC0.core.devices.local.models import analog_input
+import BAC0
+# from random import random
+# from BAC0.tasks.RecurringTask import RecurringTask
+
+# Inisialisasi koneksi BACnet
+bacnet = BAC0.lite(ip='192.168.1.2/24')
+
+# Konfigurasi pin GPIO
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(17, GPIO.OUT)
+GPIO.output(17, GPIO.LOW)
+   
+try:
+    while True:
+            ip4 = BAC0.device('192.168.1.4',3056189,bacnet)
+        # Baca data dari perangkat BACnet
+            sensor_data = ip4.points
+            temperature = sensor_data[-2]  # Anggap nilai temperatur berada pada indeks pertama
+            humidity = sensor_data[-1]
+            print("Current Temperature:", temperature)
+            print("Current Humidity:", humidity)
+            
+        # for index, temperature in enumerate(sensor_data):
+        #     print(f"Sensor {index + 1}: {temperature}")
+
+        # Kendalikan relay berdasarkan nilai temperatur
+            if temperature >= 27.00:
+                GPIO.output(17, GPIO.LOW)
+                print("Relay on")
+                status_relay = GPIO.input(17)
+                print("Status of the relay is: ", status_relay)
+            else:
+                GPIO.output(17, GPIO.HIGH)
+                print("Relay off")
+                status_relay = GPIO.input(17)
+                print("Status of the relay is: ", status_relay)
+
+            # Tunggu selama 1 detik sebelum membaca data lagi
+            time.sleep(2)           
+
+except KeyboardInterrupt:
+    GPIO.cleanup()
+    bacnet.close()
